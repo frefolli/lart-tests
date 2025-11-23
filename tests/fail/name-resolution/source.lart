@@ -1,0 +1,5 @@
+fn main() {
+  let x: i64;
+  let y: i64;
+  let z: i32 = add_integers(x + y);
+}

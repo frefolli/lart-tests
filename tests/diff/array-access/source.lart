@@ -1,0 +1,18 @@
+include "types";
+
+fn malloc(size: u64) -> &void;
+fn printf(fmt: &char, x: u64, y: i64);
+
+// Fibonacci sequence
+fn main() -> i32 {
+  let length: u64 = 20;
+  let arr: &i64 = malloc(length * sizeof<i64>);
+  arr[0] = 1;
+  arr[1] = 1;
+
+  for (let i: u64 = 2; i < length; i = i + 1) {
+    arr[i] = arr[i - 1] + arr[i - 2];
+  }
+  printf("arr[%lu] = %ld\n", length - 1, arr[length - 1]);
+  return 0;
+}

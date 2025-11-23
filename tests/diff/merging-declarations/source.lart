@@ -1,0 +1,29 @@
+mod A {
+  mod B {
+    fn C();
+  }
+}
+
+mod A {
+  mod B {
+    fn D();
+  }
+}
+
+mod A {
+  mod B {
+    fn E() {
+    }
+  }
+}
+
+mod A {
+  mod B {
+    fn C() {
+    }
+  }
+}
+
+fn main() -> integer<32, true> {
+  return 0;
+}

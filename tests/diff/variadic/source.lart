@@ -1,0 +1,17 @@
+include "types";
+
+fn printf(fmt: &char, ...);
+
+fn foo(...) {
+  let x: i32 = vanext<i32>;
+  let xp: &i32 = vanext<&i32>;
+  printf("x: %d, xp: %p\n", x, xp);
+}
+
+fn main() -> i32 {
+  let x: i32 = 1;
+  let xp: &i32 = &x;
+  printf("x: %d, xp: %p\n", x, xp);
+  foo(x, xp);
+  return 0;
+}

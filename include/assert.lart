@@ -1,0 +1,9 @@
+include "types";
+include "stdlib";
+
+fn assert(exp: bool) {
+  if (exp != true) {
+    printf("Assertion error\n");
+    exit(1);
+  }
+}

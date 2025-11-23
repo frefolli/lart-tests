@@ -1,0 +1,26 @@
+typedef i64 = integer<64, true>;
+typedef f64 = double<64>;
+typedef F = &(x: i64) -> i64;
+typedef P = struct {x: f64, y: f64};
+
+fn use_F(f: F);
+fn use_P(p: P);
+
+fn add2(x: i64, y: i64) -> i64;
+fn main() {
+  add2(0, 1, 2);
+  let f: F; // = nullptr
+  let p: P; // = {0.0, 0.0}
+
+  // Valid
+  use_F(f);
+  use_P(p);
+
+  // Invalid
+  use_F(p);
+  use_P(f);
+
+  // Valid, casted ;)
+  use_F(bitcast<F>(p));
+  use_P(bitcast<P>(f));
+}

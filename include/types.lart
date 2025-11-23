@@ -1,0 +1,16 @@
+typedef i8 = integer<8, true>;
+typedef i16 = integer<16, true>;
+typedef i32 = integer<32, true>;
+typedef i64 = integer<64, true>;
+
+typedef u8 = integer<8, false>;
+typedef u16 = integer<16, false>;
+typedef u32 = integer<32, false>;
+typedef u64 = integer<64, false>;
+
+typedef f32 = double<32>;
+typedef f64 = double<64>;
+
+typedef char = i8;
+typedef byte = u8;
+typedef string = &char;

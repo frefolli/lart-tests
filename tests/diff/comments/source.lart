@@ -1,0 +1,9 @@
+// Comment in line
+
+/*
+  Comment in block
+*/
+
+fn main(/* comment within code*/) -> integer<32, true> {
+  return 0;
+}

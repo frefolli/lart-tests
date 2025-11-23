@@ -1,0 +1,91 @@
+typedef u128 = integer<128, false>;
+typedef u64 = integer<64, false>;
+typedef i32 = integer<64, true>;
+typedef i64 = integer<64, true>;
+typedef char = integer<8, true>;
+
+typedef TSLanguage = struct {};
+typedef TSParser = struct {};
+typedef TSTree = struct {};
+typedef TSNode = struct {
+  context: u128,
+  id: &void,
+  tree: &TSTree
+};
+
+fn tree_sitter_lart() -> &TSLanguage;
+fn ts_parser_new() -> &TSParser;
+fn ts_parser_set_language(parser: &TSParser, language: &TSLanguage);
+fn ts_parser_parse_string(parser: &TSParser, old_tree: &TSTree, source_code: &char, source_code_length: u64) -> &TSTree;
+fn ts_tree_root_node(tree: &TSTree) -> TSNode;
+fn ts_tree_delete(tree: &TSTree);
+fn ts_node_string(node: TSNode) -> &char;
+
+typedef FILE = struct {}; // TODO:
+
+fn exit(code: i64);
+fn strlen(str: &char) -> u64;
+fn puts(str: &char);
+fn malloc(size: u64) -> &void;
+fn memcpy(dest: &void, src: &void, count: u64) -> &void;
+fn free(ptr: &void);
+fn fseek(file: &FILE, offset: u64, mode: u64);
+fn fopen(path: &char, mode: &char) -> &FILE;
+fn fclose(file: &FILE);
+fn ftell(file: &FILE) -> u64;
+fn fread(dst: &char, obj_num: u64, obj_size: u64, file: &FILE);
+fn fwrite(src: &char, obj_num: u64, obj_size: u64, file: &FILE);
+fn printf(fmt: &char, ptr: &void);
+
+fn read_source_code(filepath: &char) -> &char {
+  let SEEK_SET: u64 = 0;
+  let SEEK_CUR: u64 = 1;
+  let SEEK_END: u64 = 2;
+
+  let text: &char  = nullptr;
+  let file: &FILE = fopen(filepath, "r");
+
+  if (file != nullptr) {
+    fseek(file, 0, SEEK_END);
+    let fsize: i64 = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    text = cast<&char>(malloc(fsize + 1));
+    fread(text, fsize, 1, file);
+    fclose(file);
+  }
+  return text;
+}
+
+fn main(argc: i32, args: &&char) -> i32 {
+  let path: &char = "ts.lart";
+  if (argc > 1) {
+    path = (args[1]);
+  }
+
+  let parser: &TSParser = ts_parser_new();
+  let language: &TSLanguage = tree_sitter_lart();
+  ts_parser_set_language(parser, language);
+
+  let source_code: &char = read_source_code(path);
+  if (source_code == nullptr) {
+    printf("file %s doesn't exist\n", path);
+    exit(1);
+  }
+  puts("DEBUG: read source code");
+  
+  let tree: &TSTree = ts_parser_parse_string(parser, nullptr, source_code, strlen(source_code));
+  puts("DEBUG: parsed string");
+
+  let root_node: TSNode = ts_tree_root_node(tree);
+  puts("DEBUG: acquired node");
+
+  let sexp: &char = ts_node_string(root_node);
+  puts("DEBUG: serialized root_node");
+
+  puts(sexp);
+  free(sexp);
+
+  ts_tree_delete(tree);
+  free(source_code);
+  return 0;
+}

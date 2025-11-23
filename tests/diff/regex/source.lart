@@ -1,0 +1,246 @@
+typedef i8 = integer<8, true>;
+typedef i16 = integer<16, true>;
+typedef i32 = integer<32, true>;
+typedef i64 = integer<64, true>;
+
+typedef u8 = integer<8, false>;
+typedef u16 = integer<16, false>;
+typedef u32 = integer<32, false>;
+typedef u64 = integer<64, false>;
+
+typedef f32 = double<32>;
+typedef f64 = double<64>;
+typedef size_t = u64;
+typedef int_t = i32;
+
+typedef char = i8;
+typedef byte = u8;
+
+typedef regex_t = integer<4096, false>;
+typedef regmatch_t = struct {
+  rm_so: int_t,
+  rm_eo: int_t
+};
+
+fn malloc(size: size_t) -> &u8;
+fn realloc(ptr: &u8, size: size_t) -> &u8;
+fn free(ptr: &u8);
+fn memcpy(dest: &byte, src: &byte, n: size_t);
+
+fn strncpy(dest: &char, src: &char, n: size_t);
+
+fn assert(expr: bool) {
+  if (!expr)
+    abort();
+}
+
+fn abort();
+
+
+fn printf(fmt: &char, ...);
+
+fn regcomp(preg: &regex_t, string: &char, flags: int_t) -> int_t;
+fn regexec(preg: &regex_t, string: &char, nmatches: size_t, matches: &regmatch_t, flags: int_t) -> int_t;
+fn regerror(code: int_t, preg: &regex_t, buf: &char, buflen: size_t) -> size_t;
+fn regfree(preg: &regex_t);
+
+typedef vector = struct {
+  element_size: size_t,
+  capacity: size_t,
+  length: size_t
+};
+
+fn vector__new(element_size: size_t, length: size_t) -> &u8 {
+  let overhead: size_t = sizeof<vector>;
+  let base_ptr: &vector = cast<&vector>(malloc(element_size * length + overhead));
+  if (base_ptr != nullptr) {
+    let vec_ptr: &u8 = ((cast<&u8>(base_ptr)) + overhead);
+    base_ptr->element_size = element_size;
+    base_ptr->capacity = length;
+    base_ptr->length = length;
+    return vec_ptr;
+  } else {
+    return nullptr;
+  }
+}
+
+fn vector__delete(vec_ptr: &u8) {
+  let overhead: size_t = sizeof<vector>;
+  if (vec_ptr != nullptr) {
+    let base_ptr: &vector = cast<&vector>(vec_ptr - overhead);
+    free(cast<&u8>(base_ptr));
+  }
+}
+
+fn vector__length(vec_ptr: &u8) -> size_t {
+  let overhead: size_t = sizeof<vector>;
+  if (vec_ptr != nullptr) {
+    let base_ptr: &vector = cast<&vector>(vec_ptr - overhead);
+    return base_ptr->length;
+  }
+  return 0;
+}
+
+fn vector__resize(vec_ptr: &u8, new_length: size_t) -> &u8 {
+  let overhead: size_t = sizeof<vector>;
+  if (vec_ptr != nullptr) {
+    let base_ptr: &vector = cast<&vector>(vec_ptr - overhead);
+    if (new_length < base_ptr->capacity) {
+      base_ptr->length = new_length;
+      return vec_ptr;
+    } else {
+      base_ptr = cast<&vector>(realloc(cast<&u8>(base_ptr), base_ptr->element_size * new_length + overhead));
+      vec_ptr = cast<&u8>(base_ptr + overhead);
+      return vec_ptr;
+    }
+  } else {
+    return nullptr;
+  }
+}
+
+fn vector__merge(vecA_ptr: &u8, vecB_ptr: &u8, mode: size_t) -> &u8 {
+  let VECTOR_MERGE_COPY: int_t = 0;
+  let VECTOR_MERGE_NO_COPY: int_t = 1;
+  let overhead: size_t = sizeof<vector>;
+  if (vecA_ptr != nullptr && vecB_ptr != nullptr) {
+    let baseA_ptr: &vector = cast<&vector>(vecA_ptr - overhead);
+    let baseB_ptr: &vector = cast<&vector>(vecB_ptr - overhead);
+    if (baseA_ptr->element_size == baseB_ptr->element_size) {
+      if (mode == VECTOR_MERGE_COPY) {
+        let new_length: size_t = baseA_ptr->length + baseB_ptr->length;
+        let vecC_ptr: &u8 = vector__new(baseA_ptr->element_size, new_length);
+        if (vecC_ptr != nullptr) {
+          memcpy(vecC_ptr, vecA_ptr, baseA_ptr->element_size * baseA_ptr->length);
+          memcpy(vecC_ptr + baseB_ptr->element_size * baseA_ptr->length, vecB_ptr, baseB_ptr->element_size * baseB_ptr->length);
+          return vecC_ptr;
+        } else {
+          return nullptr;
+        }
+      } else if (mode == VECTOR_MERGE_NO_COPY) {
+        let new_length: size_t = baseA_ptr->length + baseB_ptr->length;
+        let lengthA: size_t = baseA_ptr->length;
+        vecA_ptr = vector__resize(vecA_ptr, new_length);
+        if (vecA_ptr != nullptr) {
+          memcpy(vecA_ptr + baseB_ptr->element_size * lengthA, vecB_ptr, baseB_ptr->element_size * baseB_ptr->length);
+          return vecA_ptr;
+        } else {
+          return nullptr;
+        }
+      } else {
+        return nullptr;
+      }
+    } else {
+      return nullptr;
+    }
+  }
+  return nullptr;
+}
+
+fn compile_regexes(vector_of_regexes: &&char) -> &regex_t {
+  const REG_EXTENDED: int_t = 1;
+  if (vector_of_regexes == nullptr)
+    return nullptr;
+
+  let length: size_t = vector__length(cast<&u8>(vector_of_regexes));
+  let vector_of_regex_ts: &regex_t = cast<&regex_t>(vector__new(sizeof<regex_t>, length));
+  let idx: size_t = 0;
+  for (idx = 0; idx < length; idx = idx + 1) {
+    if (vector_of_regexes[idx] == nullptr)
+      break;
+    let ret: int_t = regcomp(vector_of_regex_ts + idx, vector_of_regexes[idx], REG_EXTENDED);
+    if (ret != 0) {
+      let bufsize: int_t = regerror(ret, vector_of_regex_ts + idx, cast<&char>(nullptr), cast<size_t>(0));
+      let ss: &char = malloc(bufsize);
+      assert(bufsize == regerror(ret, vector_of_regex_ts + idx, ss, bufsize));
+      printf("unable to compile regex: %s\n", ss);
+      free(ss);
+      break;
+    }
+  }
+
+  if (idx < length) {
+    for (let i: size_t = 0; i < idx; i = i + 1) {
+      regfree(vector_of_regex_ts + i);
+    }
+    vector__delete(cast<&u8>(vector_of_regex_ts));
+    return nullptr;
+  } else {
+    return vector_of_regex_ts;
+  }
+}
+
+fn match_with_regex(token: &char, regex: &regex_t, string: &char) {
+  const REG_NOTEOL: int_t = 2;
+  let match: regmatch_t;
+  let ret: int_t = regexec(regex, string, 1, &match, REG_NOTEOL);
+  if (ret != 0) {
+    let bufsize: int_t = regerror(ret, regex, cast<&char>(nullptr), cast<size_t>(0));
+    let ss: &char = malloc(bufsize);
+    assert(bufsize == regerror(ret, regex, ss, bufsize));
+    printf("error while matching %s: %s\n", token, ss);
+    free(ss);
+    return false;
+  } else {
+    let length_of_match: size_t = match.rm_eo - match.rm_so;
+    let ss: &char = malloc(length_of_match + 1);
+    strncpy(ss, string + match.rm_so, length_of_match);
+    ss[length_of_match] = '\0';
+    printf("<%s> matched substring \"%s\"\n", token, ss);
+    free(ss);
+    return true;
+  }
+}
+
+fn main(argc: int_t, args: &&char) -> int_t {
+  let length: size_t = 10;
+  let token_name: &&char = vector__new(sizeof<&char>, length);
+  token_name[0] = "path_literal";
+  token_name[1] = "identifier";
+  token_name[2] = "integer";
+  token_name[3] = "double";
+  token_name[4] = "boolean";
+  token_name[5] = "character";
+  token_name[6] = "string";
+  token_name[7] = "line_comment";
+  token_name[8] = "block_comment";
+  token_name[9] = "space";
+
+  let token_regex: &&char = vector__new(sizeof<&char>, length);
+  token_regex[0] = "^[^\"<>]+";
+  token_regex[1] = "^[a-zA-Z_][a-zA-Z_0-9]*";
+  token_regex[2] = "^([0-9]+)|([+-][0-9]+)";
+  token_regex[3] = "^([0-9]+\\.[0-9]+)|([+-][0-9]+\\.[0-9]+)";
+  token_regex[4] = "^(true)|(false)";
+  token_regex[5] = "^\'(([^\\'\n])|(\\\\.)|(\\\\n))\'";
+  token_regex[6] = "^\"(([^\\'\n])|(\\\\.)|(\\\\n))+\"";
+  token_regex[7] = "^//[^\n]*";
+  token_regex[8] = "^/\\*([^*]*\\*+([^/*][^*]*\\*+)*)\\/";
+  token_regex[9] = "^[ \n\t]+";
+
+  let token_test: &&char = vector__new(sizeof<&char>, length);
+  token_test[0] = "../main.c";
+  token_test[1] = "vector__new";
+  token_test[2] = "240";
+  token_test[3] = "13.450";
+  token_test[4] = "true";
+  token_test[5] = "'\\n'";
+  token_test[6] = "\"(true)|(false)\"";
+  token_test[7] = "// qualcosa";
+  token_test[8] = "/* qualcosa \n */";
+  token_test[9] = "  \n\t\t  \t  ";
+
+  let token_regex_t: &regex_t = compile_regexes(token_regex);
+  if (token_regex_t != nullptr) {
+    for (let i: size_t = 0; i < length; i = i + 1) {
+      match_with_regex(token_name[i], token_regex_t + i, token_test[i]);
+    }
+    for (let i: size_t = 0; i < length; i = i + 1) {
+      regfree(token_regex_t + i);
+    }
+    vector__delete(cast<&u8>(token_regex_t));
+  }
+  vector__delete(cast<&u8>(token_name));
+  vector__delete(cast<&u8>(token_regex));
+  vector__delete(cast<&u8>(token_test));
+  return 0;
+}

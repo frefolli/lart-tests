@@ -1,0 +1,140 @@
+include "types";
+include "stdlib";
+
+// Placeholder for a print function (replace with an actual implementation)
+fn put_str(s: &u8) {
+  printf("%s", s);
+}
+fn put_char(c: u8) {
+  printf("%c", c);
+}
+fn put_num(n: u64) {
+  printf("%d", n);
+}
+
+// Structure to represent the cells
+typedef Cells = struct {
+  data: &u8,  // Pointer to the array of cells
+  size: u64   // Size of the cell array
+};
+
+// Function to allocate and initialize a new array of cells
+fn new_cells(size: u64) -> &Cells {
+  let cells: &Cells = cast<&Cells>(malloc(sizeof<Cells>));
+  cells->data = cast<&u8>(malloc(size * sizeof<u8>));
+  cells->size = size;
+
+  // Initialize all cells to 0
+  let i: u64 = 0;
+  let ptr: &u8 = cells->data;
+  while (i < size) {
+    *ptr = false;  // Dereference the pointer and set to 0
+    ptr = ptr + 1;  // Move pointer to the next cell
+    i = i + 1;
+  }
+
+  return cells;
+}
+
+// Function to free the cell array
+fn delete_cells(cells: &Cells) {
+  if (cells != nullptr) {
+    free(cast<&void>(cells->data));
+    free(cast<&void>(cells));
+  }
+}
+
+// Function to apply Rule 110 for one generation
+fn apply_rule_110(current: &Cells) -> &Cells {
+  let next: &Cells = new_cells(current->size);  // Allocate memory for the next generation
+
+  let i: u64 = 0;
+  let current_ptr: &u8 = current->data;  // Pointer to the current generation
+  let next_ptr: &u8 = next->data;        // Pointer to the next generation
+
+  while (i < current->size) {
+    // Determine the left, center, and right neighbors
+    let left: u8 = 0;
+    let center: u8 = *current_ptr;
+    let right: u8 = 0;
+
+    if (i > 0) {
+      left = *(current_ptr - 1);  // Move pointer left
+    }
+    if (i < current->size - 1) {
+      right = *(current_ptr + 1);  // Move pointer right
+    }
+
+    // Apply Rule 110 logic
+    if ((left == true) && (center == true) && (right == true)) {
+      *next_ptr = false;
+    } else if ((left == true) && (center == true) && (right == false)) {
+      *next_ptr = true;
+    } else if ((left == true) && (center == false) && (right == true)) {
+      *next_ptr = true;
+    } else if ((left == true) && (center == false) && (right == false)) {
+      *next_ptr = false;
+    } else if ((left == false) && (center == true) && (right == true)) {
+      *next_ptr = true;
+    } else if ((left == false) && (center == true) && (right == false)) {
+      *next_ptr = true;
+    } else if ((left == false) && (center == false) && (right == true)) {
+      *next_ptr = true;
+    } else {
+      *next_ptr = false;
+    }
+
+    current_ptr = current_ptr + 1;  // Move to the next cell
+    next_ptr = next_ptr + 1;
+    i = i + 1;
+  }
+
+  return next;  // Return the next generation
+}
+
+// Function to display the current state of the cells
+fn print_cells(cells: &Cells) {
+  let i: u64 = 0;
+  let ptr: &u8 = cells->data;  // Pointer to the array
+
+  while (i < cells->size) {
+    if (*ptr == 1) {
+      put_char('1');
+    } else {
+      put_char('0');
+    }
+
+    ptr = ptr + 1;  // Move to the next cell
+    i = i + 1;
+  }
+  put_char('\n');
+}
+
+// Main function to simulate Rule 110
+fn main() -> i32 {
+  let size: u64 = 20;          // Size of the cellular automaton
+  let generations: u64 = 10;   // Number of generations to simulate
+
+  let cells: &Cells = new_cells(size);  // Create the initial array of cells
+  let initial_ptr: &u8 = cells->data + 10;  // Center of the array
+  *initial_ptr = true;  // Set the initial state with a single 1 in the middle
+
+  put_str("Initial State:\n");
+  print_cells(cells);
+
+  let gen: u64 = 0;
+  while (gen < generations) {
+    let next_gen: &Cells = apply_rule_110(cells);  // Get the next generation
+    put_str("Generation ");
+    put_num(gen + 1);
+    put_str(":\n");
+    print_cells(next_gen);
+
+    delete_cells(cells);  // Free the old generation
+    cells = next_gen;     // Move to the next generation
+    gen = gen + 1;
+  }
+
+  delete_cells(cells);  // Free the final generation
+  return 0;
+}

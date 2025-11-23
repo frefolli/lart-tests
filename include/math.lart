@@ -1,0 +1,7 @@
+include "types";
+
+fn fabs(value: f64) -> f64 {
+  if (value < 0.0)
+    value = -value;
+  return value;
+}

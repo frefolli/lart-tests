@@ -1,0 +1,42 @@
+mod A {
+  mod B {
+    typedef pV = &void;
+  }
+}
+
+mod A {
+  mod B {
+    // err: doesn't match type
+    typedef pV = &&void;
+  }
+}
+
+mod Some {
+  typedef i64 = integer<64, false>;
+  typedef i64 = double<64>;
+
+  fn foo(x: i64) -> void {
+  }
+
+  // ok matching names and types
+  fn foo(x: Some::i64) -> void;
+
+  // ok matching types
+  fn foo(y: i64) -> void;
+
+  // err: diverging parameter number
+  fn foo(x: i64, y: i64) -> void;
+
+  // err: diverging parameter types
+  fn foo(y: &i64) -> void;
+
+  // err: diverging return type
+  fn foo(y: i64) -> &void;
+
+  // err: redefining function
+  fn foo(x: Some::i64) -> void {
+  }
+}
+
+// err: already declared 'Some' as module
+fn Some() {}

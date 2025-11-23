@@ -1,0 +1,9 @@
+typedef A = struct {b: B};
+typedef B = struct {c: C};
+typedef C = struct {d: D};
+typedef D = struct {a: A};
+
+typedef E = struct {f: F};
+typedef F = struct {g: G};
+typedef G = struct {h: H};
+typedef H = struct {e: &E};

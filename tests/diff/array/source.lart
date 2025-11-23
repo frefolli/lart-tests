@@ -1,0 +1,52 @@
+include "types";
+include "stdlib";
+
+typedef Color = struct {
+  values: [byte, 4]
+};
+
+typedef ColorMap = struct {
+  length: u32,
+  colors: [Color]
+};
+
+fn try_int_array() {
+  let int_array: [i32, 11];
+  for (let i: u32 = 0; i < 11; i = i + 1) {
+    int_array[i] = i * (10 - i);
+  }
+  for (let i: u32 = 0; i < 11; i = i + 1) {
+    printf("int_array[%u] = %d\n", i, int_array[i]);
+  }
+}
+
+fn try_color_map() {
+  let map: &ColorMap = bitcast<&ColorMap>(malloc(sizeof<ColorMap> + sizeof<Color> * 3));
+  map->length = 3;
+  // RED
+  map->colors[0].values[0] = 255;
+  map->colors[0].values[1] = 0;
+  map->colors[0].values[2] = 0;
+  map->colors[0].values[3] = 255;
+  // GREEN
+  map->colors[1].values[0] = 0;
+  map->colors[1].values[1] = 255;
+  map->colors[1].values[2] = 0;
+  map->colors[1].values[3] = 255;
+  // BLUE
+  map->colors[2].values[0] = 0;
+  map->colors[2].values[1] = 0;
+  map->colors[2].values[2] = 255;
+  map->colors[2].values[3] = 255;
+
+  for (let i: u32 = 0; i < map->length; i = i + 1) {
+    printf("map[%u] = %x\n", i, bitcast<u32>(map->colors[i].values));
+  }
+  free(map);
+}
+
+fn main() -> i32 {
+  try_int_array();
+  try_color_map();
+  return 0;
+}

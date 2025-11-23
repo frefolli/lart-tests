@@ -1,0 +1,55 @@
+include "types";
+
+typedef Color = struct {
+    r: byte,
+    g: byte,
+    b: byte,
+    a: byte
+};
+
+fn printf(fmt: &char, ...);
+fn InitWindow(width: u32, height: u32, title: &char);
+fn SetTargetFPS(fps: u32);
+fn WindowShouldClose() -> bool;
+fn BeginDrawing();
+fn EndDrawing();
+fn CloseWindow();
+fn ClearBackground(color: Color);
+fn DrawText(text: &char, posX: u32, posY: u32, fontSize: u32, color: Color);
+
+fn foo(color: Color) {
+  printf("x%x\n", *(cast<&u32>(&color)));
+}
+
+fn main() -> i64 {
+  let screenWidth: u32 = 800;
+  let screenHeight: u32 = 450;
+
+  let background_color: Color;
+  background_color.r = 245;
+  background_color.g = 245;
+  background_color.b = 245;
+  background_color.a = 255;
+  foo(background_color);
+
+  let text_color: Color;
+  text_color.r = 200;
+  text_color.g = 200;
+  text_color.b = 200;
+  text_color.a = 255;
+  foo(text_color);
+
+  InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+  SetTargetFPS(60);
+
+  while (!WindowShouldClose()) {
+    BeginDrawing();
+    ClearBackground(background_color);
+    DrawText("Congrats! You created your first window!", 190, 200, 20, text_color);
+    EndDrawing();
+    break;
+  }
+  
+  CloseWindow();
+  return 0;
+}

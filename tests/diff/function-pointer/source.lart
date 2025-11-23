@@ -1,0 +1,10 @@
+typedef char = integer<8, true>;
+typedef i32 = integer<32, true>;
+fn printf(fmt: &char, s: &char); 
+typedef printer = (fmt: &char, s: &char) -> void;
+
+fn main() -> i32 {
+  let pp: printer = printf;
+  pp("[%s]\n", "{}");
+  return 0;
+}

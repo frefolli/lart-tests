@@ -1,0 +1,152 @@
+typedef u64 = integer<64, false>;
+typedef i64 = integer<64, true>;
+typedef char = integer<8, false>;
+
+// from libc
+fn malloc(size: u64) -> &void;
+fn free(ptr: &void);
+fn puts(str: &char);
+fn putchar(c: char);
+fn strlen(str: &char) -> u64;
+fn exit(code: u64);
+
+fn print_bool(x: bool) {
+  if (x) {
+    putchar('1');
+  } else {
+    putchar('0');
+  }
+}
+
+fn print_set(x: bool, y: bool, z: bool) {
+  print_bool(x);
+  print_bool(y);
+  print_bool(z);
+  putchar('\n');
+}
+
+mod turing {
+  typedef Tape = struct {
+    cells: &bool,
+    buffer: &bool,
+    repr: &char,
+    length: u64
+  };
+
+  fn tape_new(tape: &Tape, length: u64) {
+    tape->length = length;
+    tape->cells = malloc(tape->length * sizeof<bool>);
+    tape->buffer = malloc(tape->length * sizeof<bool>);
+    tape->repr = malloc((tape->length + 1) * sizeof<char>);
+  }
+
+  fn tape_delete(tape: &Tape) {
+    if (tape->cells != nullptr) {
+      free(tape->cells);
+      tape->cells = nullptr;
+    }
+    if (tape->buffer != nullptr) {
+      free(tape->buffer);
+      tape->buffer = nullptr;
+    }
+    if (tape->repr != nullptr) {
+      free(tape->repr);
+      tape->repr = nullptr;
+    }
+    tape->length = 0;
+  }
+
+  fn tape_update(tape: &Tape) {
+    // writes new state to buffer
+    let length: u64 = tape->length;
+    let end: u64 = length - 1;
+    for (let i: u64 = 1; i < end; i = i + 1) {
+      let a: bool = *(tape->cells + i - 1);
+      let b: bool = *(tape->cells + i);
+      let c: bool = *(tape->cells + i + 1);
+      // putchar(' ');
+      // print_set(a, b ,c);
+      if (a == false) {
+        if (b == false) {
+          if (c == false) {
+            *(tape->buffer + i) = false;
+          } else {
+            *(tape->buffer + i) = true;
+          }
+        } else {
+          if (c == false) {
+            *(tape->buffer + i) = true;
+          } else {
+            *(tape->buffer + i) = true;
+          }
+        }
+      } else {
+        if (b == false) {
+          if (c == false) {
+            *(tape->buffer + i) = false;
+          } else {
+            *(tape->buffer + i) = true;
+          }
+        } else {
+          if (c == false) {
+            *(tape->buffer + i) = true;
+          } else {
+            *(tape->buffer + i) = false;
+          }
+        }
+      }
+    }
+    // copy back the buffer into length
+    for (let i: u64 = 0; i < length; i = i + 1) {
+      *(tape->cells + i) = *(tape->buffer + i);
+    }
+  }
+
+  fn tape_print(tape: &Tape) {
+    for (let i: u64 = 0; i < tape->length; i = i + 1) {
+      if (*(tape->cells + i)) {
+        *(tape->repr + i) = '1';
+      } else {
+        *(tape->repr + i) = '0';
+      }
+    }
+    *(tape->repr + tape->length) = '\0';
+    puts(tape->repr);
+  }
+
+  fn tape_init(tape: &Tape, buf: &char) {
+    let length: u64 = strlen(buf);
+    if (tape->length != length) {
+      puts("tape.length != buf.length");
+      exit(1);
+    }
+    for (let i: u64 = 0; i < tape->length; i = i + 1) {
+      if (*(buf + i) == '1') {
+        *(tape->cells + i) = true;
+      } else {
+        *(tape->cells + i) = false;
+      }
+    }
+  }
+}
+
+fn main() -> i64 {
+  let tape: turing::Tape;
+  let length: u64 = 32;
+  let epocs: u64 = 20;
+
+  // initialize the buffer
+  turing::tape_new(&tape, length);
+  turing::tape_init(&tape, "00000000000000000000000000000001");
+  turing::tape_print(&tape);
+
+  // run 20 iterations
+  for (let i: u64 = 0; i < epocs; i = i + 1) {
+    turing::tape_update(&tape);
+    turing::tape_print(&tape);
+  }
+
+  // clean the tape
+  turing::tape_delete(&tape);
+  return 0;
+}
