@@ -1,0 +1,180 @@
+diff:
+- inputs: []
+  kind: diff
+  links: []
+  name: array-access
+  path: ./tests/diff/array-access
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: array
+  path: ./tests/diff/array
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: chatgpt
+  path: ./tests/diff/chatgpt
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: comments
+  path: ./tests/diff/comments
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: function-pointer
+  path: ./tests/diff/function-pointer
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: hello
+  path: ./tests/diff/hello
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: include-files
+  path: ./tests/diff/include-files
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: merging-declarations
+  path: ./tests/diff/merging-declarations
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: raylib
+  path: ./tests/diff/raylib
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: regex
+  path: ./tests/diff/regex
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: streams-and-floats
+  path: ./tests/diff/streams-and-floats
+  program: program.exe
+  sources:
+  - source.c
+  - source.lart
+  - source.o
+- inputs: []
+  kind: diff
+  links: []
+  name: strucs-as-rvalue
+  path: ./tests/diff/strucs-as-rvalue
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: strucs
+  path: ./tests/diff/strucs
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: tree
+  path: ./tests/diff/tree
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: ts
+  path: ./tests/diff/ts
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: variadic
+  path: ./tests/diff/variadic
+  program: program.exe
+  sources:
+  - source.lart
+fail:
+- inputs: []
+  kind: fail
+  links: []
+  name: decl-type-checking
+  path: ./tests/fail/decl-type-checking
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: fail
+  links: []
+  name: duplicate-definition
+  path: ./tests/fail/duplicate-definition
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: fail
+  links: []
+  name: include-directives
+  path: ./tests/fail/include-directives
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: fail
+  links: []
+  name: name-resolution
+  path: ./tests/fail/name-resolution
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: fail
+  links: []
+  name: syntax
+  path: ./tests/fail/syntax
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: fail
+  links: []
+  name: type-checking
+  path: ./tests/fail/type-checking
+  program: program.exe
+  sources:
+  - source.lart
