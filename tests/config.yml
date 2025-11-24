@@ -88,7 +88,6 @@ diff:
   sources:
   - source.c
   - source.lart
-  - source.o
 - inputs: []
   kind: diff
   links: []
