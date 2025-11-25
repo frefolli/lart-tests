@@ -169,7 +169,7 @@ fn compile_regexes(vector_of_regexes: &&char) -> &regex_t {
   }
 }
 
-fn match_with_regex(token: &char, regex: &regex_t, string: &char) {
+fn match_with_regex(token: &char, regex: &regex_t, string: &char) -> bool {
   const REG_NOTEOL: int_t = 2;
   let match: regmatch_t;
   let ret: int_t = regexec(regex, string, 1, &match, REG_NOTEOL);

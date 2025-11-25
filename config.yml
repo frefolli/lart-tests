@@ -1,8 +1,11 @@
 cc:
   include_directories: []
   path: /usr/bin/clang
+  options:
+    - -c
 lartc:
   include_directories:
   - include
   path: /home/refo/Documents/Github/lartc/builddir/lartc
+  options: []
 test_dir: tests

@@ -1,3 +1,28 @@
+succ:
+- inputs: []
+  kind: succ
+  links: []
+  name: include-files
+  path: ./tests/succ/include-files
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: succ
+  links: []
+  name: merging-declarations
+  path: ./tests/succ/merging-declarations
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: succ
+  links: []
+  name: comments
+  path: ./tests/succ/comments
+  program: program.exe
+  sources:
+  - source.lart
 diff:
 - inputs: []
   kind: diff
@@ -26,14 +51,6 @@ diff:
 - inputs: []
   kind: diff
   links: []
-  name: comments
-  path: ./tests/diff/comments
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: diff
-  links: []
   name: function-pointer
   path: ./tests/diff/function-pointer
   program: program.exe
@@ -49,23 +66,8 @@ diff:
   - source.lart
 - inputs: []
   kind: diff
-  links: []
-  name: include-files
-  path: ./tests/diff/include-files
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: diff
-  links: []
-  name: merging-declarations
-  path: ./tests/diff/merging-declarations
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: diff
-  links: []
+  links:
+    - raylib
   name: raylib
   path: ./tests/diff/raylib
   program: program.exe
@@ -79,14 +81,15 @@ diff:
   program: program.exe
   sources:
   - source.lart
-- inputs: []
+- inputs:
+  - input.in
   kind: diff
   links: []
   name: streams-and-floats
   path: ./tests/diff/streams-and-floats
   program: program.exe
   sources:
-  - source.c
+  - contrib.c
   - source.lart
 - inputs: []
   kind: diff
@@ -114,7 +117,9 @@ diff:
   - source.lart
 - inputs: []
   kind: diff
-  links: []
+  links:
+    - tree-sitter
+    - tree-sitter-lart
   name: ts
   path: ./tests/diff/ts
   program: program.exe
@@ -125,6 +130,24 @@ diff:
   links: []
   name: variadic
   path: ./tests/diff/variadic
+  program: program.exe
+  sources:
+  - source.lart
+- inputs: []
+  kind: diff
+  links: []
+  name: static-variables
+  path: ./tests/diff/static-variables
+  program: program.exe
+  sources:
+  - source.lart
+  - extern.lart
+- inputs:
+  - input.in
+  kind: diff
+  links: []
+  name: streams-with-externs
+  path: ./tests/diff/streams-with-externs
   program: program.exe
   sources:
   - source.lart

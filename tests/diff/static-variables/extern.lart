@@ -1,0 +1,3 @@
+include "types";
+
+global var X: i32 = 42;

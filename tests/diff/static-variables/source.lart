@@ -1,0 +1,13 @@
+include "types";
+include "stdlib";
+
+extern var X: i32;
+global var Y: i32 = 42;
+       var Z: i32 = 42;
+
+fn main() -> i32 {
+  printf("(extern) X: %d\n", X);
+  printf("(global) Y: %d\n", Y);
+  printf("(normal) Z: %d\n", Z);
+  return (X + Y) / Z - 2;
+}

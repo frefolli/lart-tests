@@ -1,0 +1,15 @@
+include "types";
+include "stdlib";
+include "assert";
+
+extern var stdin: &FILE;
+extern var stdout: &FILE;
+extern var stderr: &FILE;
+
+fn main() -> i32 {
+  let x: f64 = 1.1;
+  printf("you inserted: %f\n", x);
+  assert(fscanf(stdin, "%lf", &x) == 1);
+  printf("you inserted: %f\n", x);
+  return 0;
+}

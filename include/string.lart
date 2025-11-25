@@ -1,0 +1,3 @@
+include "types";
+fn strlen(s: &char) -> u64;
+fn strcmp(a: &char, b: &char) -> i32;
