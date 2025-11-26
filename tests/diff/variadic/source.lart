@@ -4,14 +4,16 @@ fn printf(fmt: &char, ...);
 
 fn foo(...) {
   let x: i32 = vanext<i32>;
-  let xp: &i32 = vanext<&i32>;
-  printf("x: %d, xp: %p\n", x, xp);
+  let y: f64 = vanext<f64>;
+  let z: u32 = vanext<u32>;
+  printf("x: %d, y: %f, %lu\n", x, y, z);
 }
 
 fn main() -> i32 {
   let x: i32 = 1;
-  let xp: &i32 = &x;
-  printf("x: %d, xp: %p\n", x, xp);
-  foo(x, xp);
+  let y: f64 = 1.2345;
+  let z: u32 = 123456;
+  printf("x: %d, y: %f, %lu\n", x, y, z);
+  foo(x, y, z);
   return 0;
 }

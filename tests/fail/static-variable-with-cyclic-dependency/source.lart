@@ -1,0 +1,5 @@
+include "types";
+
+var x: i32 = 1;
+var y: i32 = z;
+var z: i32 = y;

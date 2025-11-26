@@ -57,7 +57,7 @@ fn read_source_code(filepath: &char) -> &char {
 }
 
 fn main(argc: i32, args: &&char) -> i32 {
-  let path: &char = "ts.lart";
+  let path: &char = "file.lart";
   if (argc > 1) {
     path = (args[1]);
   }

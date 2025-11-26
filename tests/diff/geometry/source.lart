@@ -1,0 +1,48 @@
+include "types";
+include "stdlib";
+include "math";
+
+typedef Vec2 = struct {
+  x: f64,
+  y: f64
+};
+
+fn make_vec2(ax: f64, ay: f64) -> Vec2 {
+  let v: Vec2;
+  v.x = ax;
+  v.y = ay;
+  return v;
+}
+
+fn add(a: Vec2, b: Vec2) -> Vec2 {
+  let r: Vec2;
+  r.x = a.x + b.x;
+  r.y = a.y + b.y;
+  return r;
+}
+
+fn scale(v: Vec2, s: f64) -> Vec2 {
+  let r: Vec2;
+  r.x = v.x * s;
+  r.y = v.y * s;
+  return r;
+}
+
+fn length(v: Vec2) -> f64 {
+  return sqrt(v.x * v.x + v.y * v.y);
+}
+
+fn main() -> i32 {
+  let u: Vec2 = make_vec2(3.0, 4.0);
+  let v: Vec2 = make_vec2(-1.0, 2.0);
+
+  let w: Vec2 = add(u, v);
+  let k: Vec2 = scale(w, 0.5);
+  let d: f64 = length(k);
+
+  printf("w = (%f, %f)\n", w.x, w.y);
+  printf("k = (%f, %f)\n", k.x, k.y);
+  printf("length(k) = %f\n", d);
+
+  return 0;
+}

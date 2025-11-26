@@ -1,0 +1,3 @@
+include "types";
+
+extern var x: i32 = 0;

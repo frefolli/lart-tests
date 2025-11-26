@@ -1,0 +1,26 @@
+include "types";
+include "stdlib";
+include "math";
+// Newton's method for approximating square roots
+fn sqrt_newton(n: f64) -> f64 {
+  let x: f64 = n;           // initial guess
+  let eps: f64 = 0.0000001; // convergence tolerance
+
+  while (true) {
+    let next: f64 = 0.5 * (x + n / x);
+    if (fabs(next - x) < eps) {
+      return next;
+    }
+    x = next;
+  }
+}
+
+fn main() -> i32 {
+  let r1: f64 = sqrt_newton(2.0);
+  let r2: f64 = sqrt_newton(144.0);
+
+  printf("sqrt(2)   = %f\n", r1);
+  printf("sqrt(144) = %f\n", r2);
+
+  return 0;
+}

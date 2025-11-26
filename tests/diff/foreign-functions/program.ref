@@ -1,0 +1,4 @@
+hello: length = 5
+world: length = 5
+strcmp("hello", "world") = -15
+strcmp("hello", "hello") = 0

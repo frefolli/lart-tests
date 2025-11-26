@@ -1,0 +1,3 @@
+include "types";
+
+var x: i32 = vanext<i32>;

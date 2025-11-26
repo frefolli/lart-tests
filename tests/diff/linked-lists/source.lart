@@ -1,0 +1,45 @@
+include "types";
+include "stdlib";
+
+typedef Node = struct {
+  value: i32,
+  next: &Node
+};
+
+fn make_node(v: i32, tail: &Node) -> &Node {
+  let p: &Node = bitcast<&Node>(malloc(sizeof<Node>));
+  (*p).value = v;
+  (*p).next  = tail;
+  return p;
+}
+
+fn length(list: &Node) -> i32 {
+  if (list == nullptr) {
+    return 0;
+  }
+  return 1 + length((*list).next);
+}
+
+fn free_all(list: &Node) -> void {
+  if (list == nullptr) {
+    return;
+  }
+  let nxt: &Node = (*list).next;
+  free(bitcast<&void>(list));
+  free_all(nxt);
+}
+
+fn main() -> i32 {
+  let head: &Node = nullptr;
+
+  // build list: 5 -> 4 -> 3 -> 2 -> 1
+  for (let i: i32 = 1; i <= 5; i = i + 1) {
+    head = make_node(i, head);
+  }
+
+  let n: i32 = length(head);
+  printf("length = %d\n", n);
+
+  free_all(head);
+  return 0;
+}

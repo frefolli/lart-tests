@@ -1,0 +1,36 @@
+include "types";
+include "stdlib";
+
+fn fill(slice: &[i32], n: u64) {
+  let i: u64 = 0;
+  while (i < n) {
+    slice[i] = bitcast<i32>((i * 3) - 1);
+    i = i + 1;
+  }
+}
+
+fn sum(slice: &[i32], n: u64) -> i32 {
+  let acc: i32 = 0;
+  let i: u64 = 0;
+  while (i < n) {
+    acc = acc + slice[i];
+    i = i + 1;
+  }
+  return acc;
+}
+
+fn main() -> i32 {
+  let n: u64 = 10;
+
+  // Allocate n * sizeof(i32) bytes
+  let raw: &void = malloc(n * sizeof<i32>);
+  let arr: &[i32] = bitcast<&[i32]>(raw);
+
+  fill(arr, n);
+
+  let s: i32 = sum(arr, n);
+  printf("sum = %d\n", s);
+
+  free(raw);
+  return 0;
+}

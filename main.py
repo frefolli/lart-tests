@@ -90,14 +90,16 @@ class TestKind(enum.Enum):
     raise ValueError('Value `%s` is not valid ofr TestKind' % (value,))
 
 class Test:
-  def __init__(self, kind: TestKind, name: str, path: str, sources: list[str], links: list[str], program: str, inputs: list[str], output: str) -> None:
+  def __init__(self, kind: TestKind, name: str, path: str, sources: list[str], links: list[str], program: str, args: list[str], inputs: list[str], reference: str, output: str) -> None:
     self.kind: TestKind = kind
     self.name: str = name
     self.path: str = path
     self.sources: list[str] = sources
     self.links: list[str] = links
     self.program: str = program
+    self.args: list[str] = args
     self.inputs: list[str] = inputs
+    self.reference: str = reference
     self.output: str = output
 
   @staticmethod
@@ -115,22 +117,28 @@ class Test:
     if kind not in TestKind.values():
       raise ValueError('The test kind `%s` isn\'t among the recognized ones: %s' % (kind, TestKind.values()))
 
+    reference = 'program.ref'
     sources = []
     links = []
     inputs = []
+    args = []
     for file in os.listdir(path):
       ext = file.split('.')[-1]
       if ext in ['c', 'o', 'lart', 's', 'll']:
         sources.append(file)
       elif ext in ['in']:
-        inputs.append('in')
+        inputs.append(file)
+      elif ext in ['ref']:
+        reference = file
+      elif ext in ['cli']:
+        args.append(file)
 
     program = 'program.exe'
     output = 'program.out'
-    return Test(TestKind.parse(kind), name, path, sources, links, program, inputs, output)
+    return Test(TestKind.parse(kind), name, path, sources, links, program, args, inputs, reference, output)
 
 
-  def build(self, framework: Framework) -> None:
+  def build(self, framework: Framework) -> bool:
     sources = [os.path.join(self.path, source) for source in self.sources]
     c_sources = list(filter(lambda f: f.endswith('.c'), sources))
     lart_sources = list(filter(lambda f: f.endswith('.lart'), sources))
@@ -145,7 +153,7 @@ class Test:
       o_sources.add(o_source)
       ok = framework.cc.compile([c_source], [], o_source)
       if not ok:
-        return
+        return False
 
     for lart_source in lart_sources:
       o_source = lart_source.replace('.lart', '.o')
@@ -154,7 +162,7 @@ class Test:
       o_sources.add(o_source)
       ok = framework.lartc.compile([lart_source], [], o_source)
       if not ok:
-        return
+        return False
 
     for ll_source in ll_sources:
       o_source = ll_source.replace('.ll', '.o')
@@ -163,7 +171,7 @@ class Test:
       o_sources.add(o_source)
       ok = framework.lartc.compile([ll_source], [], o_source)
       if not ok:
-        return
+        return False
 
     for s_source in s_sources:
       o_source = s_source.replace('.s', '.o')
@@ -172,21 +180,51 @@ class Test:
       o_sources.add(o_source)
       ok = framework.lartc.compile([s_source], [], o_source)
       if not ok:
-        return
+        return False
 
     o_sources = list(o_sources)
     program = os.path.join(self.path, self.program)
     ok = framework.lartc.compile(o_sources, self.links, program)
-    if not ok:
-      return
+    return ok == True
 
-  def run(self, framework: Framework) -> None:
+  def run(self, framework: Framework) -> bool:
+    assert self.kind in [TestKind.SUCC, TestKind.DIFF]
     program = os.path.join(self.path, self.program)
     cmd = CMD(program)
+    cmd.append(self.args)
     for input in self.inputs:
       cmd.append(['<', os.path.join(self.path, input)])
     cmd.append(['>', os.path.join(self.path, self.output)])
-    cmd.exec()
+    return cmd.exec() == 0
+
+  def consolidate(self, framework: Framework) -> None:
+    assert self.kind in [TestKind.DIFF]
+    output_path = os.path.join(self.path, self.output)
+    reference_path = os.path.join(self.path, self.reference)
+
+    if not os.path.exists(output_path):
+      raise ValueError('Cannot consolidate test `%s/%s` because it was never executed in the first place')
+
+    cmd = CMD('cp')
+    cmd.append(output_path)
+    cmd.append(reference_path)
+    assert cmd.exec() == 0
+
+  def compare(self, framework: Framework) -> None:
+    assert self.kind in [TestKind.DIFF]
+    output_path = os.path.join(self.path, self.output)
+    reference_path = os.path.join(self.path, self.reference)
+
+    if not os.path.exists(output_path):
+      raise ValueError('Cannot compare test `%s/%s` because it was never executed in the first place')
+
+    if not os.path.exists(reference_path):
+      raise ValueError('Cannot compare test `%s/%s` because it was never consolidated in the first place')
+
+    cmd = CMD('diff')
+    cmd.append(output_path)
+    cmd.append(reference_path)
+    return cmd.exec() == 0
 
   def clean(self, framework: Framework) -> None:
     sources = [os.path.join(self.path, source) for source in self.sources]
@@ -208,7 +246,7 @@ class Test:
     cmd.append(o_sources)
     cmd.append(program)
     cmd.append(output)
-    cmd.exec()
+    assert cmd.exec() == 0
 
   def report(self, framework: Framework) -> None:
     print('#' * 20 + self.name.ljust(20) + '#' * 20)
@@ -224,7 +262,9 @@ class Test:
       'sources': self.sources,
       'links': self.links,
       'program': self.program,
+      'args': self.args,
       'inputs': self.inputs,
+      'reference': self.reference,
       'output': self.output,
     }
 
@@ -237,7 +277,9 @@ class Test:
       sources = (data.get('sources') or []),
       links = (data.get('links') or []),
       program = (data.get('program') or 'program.exe'),
+      args = (data.get('args') or []),
       inputs = (data.get('inputs') or []),
+      reference = (data.get('reference') or 'program.ref'),
       output = (data.get('output') or 'program.out'),
     )
 
@@ -246,7 +288,7 @@ class Framework:
     self.cc = cc
     self.lartc =lartc 
     self.test_dir: str = test_dir
-    self.tests: dict[TestKind, list[Test]] = Framework.load_tests(test_dir)
+    self.tests: dict[TestKind, dict[str, Test]] = Framework.load_tests(test_dir)
 
   def to_dict(self) -> dict:
     return {
@@ -277,8 +319,8 @@ class Framework:
       return framework
 
   @staticmethod
-  def discover_tests(path: str) -> dict[TestKind, list[Test]]:
-    tests: dict[TestKind, list[Test]] = {}
+  def discover_tests(path: str) -> dict[TestKind, dict[str, Test]]:
+    tests: dict[TestKind, dict[str, Test]] = {}
     for kinddir in os.listdir(path):
       kindpath = os.path.join(path, kinddir)
       if os.path.isdir(kindpath):
@@ -287,12 +329,26 @@ class Framework:
           if os.path.isdir(namepath):
             test = Test.discover(namepath)
             if test.kind not in tests:
-              tests[test.kind] = []
-            tests[test.kind].append(test)
+              tests[test.kind] = {}
+            tests[test.kind][test.name] = test
     return tests
 
   @staticmethod
-  def load_tests(test_dir: str) -> dict[TestKind, list[Test]]:
+  def write_tests(tests: dict[TestKind, dict[str, Test]], test_config: str):
+    write_yaml(test_config, {key.value:[test.to_dict() for test in value.values()] for (key, value) in tests.items()})
+
+  @staticmethod
+  def read_tests(test_config: str) -> dict[TestKind, dict[str, Test]]:
+      result: dict[TestKind, dict[str, Test]] = {}
+      for kind, tests in read_yaml(test_config).items():
+        result[TestKind.parse(kind)] = {}
+        for test in tests:
+          test = Test.from_dict(test)
+          result[test.kind][test.name] = test
+      return result
+
+  @staticmethod
+  def load_tests(test_dir: str) -> dict[TestKind, dict[str, Test]]:
     if not os.path.exists(test_dir):
       raise ValueError('Cannot load Framework as the test directory `%s` doesn\'t exist' % test_dir)
     if not os.path.isdir(test_dir):
@@ -301,10 +357,14 @@ class Framework:
     test_config = os.path.join(test_dir, 'config.yml')
     if not os.path.exists(test_config):
       tests = Framework.discover_tests(test_dir)
-      write_yaml(test_config, {key.value:[test.to_dict() for test in value] for (key, value) in tests.items()})
+      Framework.write_tests(tests, test_config)
       return tests
     else:
-      return {TestKind.parse(kind):[Test.from_dict(test) for test in tests] for kind, tests in read_yaml(test_config).items()}
+      return Framework.read_tests(test_config)
+
+  def save(self):
+    test_config = os.path.join(self.test_dir, 'config.yml')
+    Framework.write_tests(self.tests, test_config)
 
   def get_targets(self, raw_targets: list[str]) -> list[Test]:
     targets: list[Test] = []
@@ -323,7 +383,7 @@ class Framework:
 
     for kind in kinds.keys():
       names = kinds[kind]
-      tests_of_that_kind: list[Test] = (self.tests.get(kind) or [])
+      tests_of_that_kind: list[Test] = list((self.tests.get(kind) or {}).values())
       filtered_tests = list(filter(lambda t: t.name in names, tests_of_that_kind))
       filtered_names = set([t.name for t in filtered_tests])
       missing_names = names.difference(filtered_names)
@@ -335,8 +395,8 @@ class Framework:
   def clean(self, raw_targets: list[str]):
     targets: list[Test] = []
     if len(raw_targets) == 0:
-      targets += (self.tests.get(TestKind.SUCC) or [])
-      targets += (self.tests.get(TestKind.DIFF) or [])
+      targets += list((self.tests.get(TestKind.SUCC) or {}).values())
+      targets += list((self.tests.get(TestKind.DIFF) or {}).values())
     else:
       targets = self.get_targets(raw_targets)
 
@@ -346,58 +406,116 @@ class Framework:
   def build(self, raw_targets: list[str]):
     targets: list[Test] = []
     if len(raw_targets) == 0:
-      targets += (self.tests.get(TestKind.SUCC) or [])
-      targets += (self.tests.get(TestKind.DIFF) or [])
+      targets += list((self.tests.get(TestKind.SUCC) or {}).values())
+      targets += list((self.tests.get(TestKind.DIFF) or {}).values())
     else:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
-      test.build(self)
+      assert test.build(self)
 
   def run(self, raw_targets: list[str]):
     targets: list[Test] = []
     if len(raw_targets) == 0:
-      targets += (self.tests.get(TestKind.SUCC) or [])
-      targets += (self.tests.get(TestKind.DIFF) or [])
+      targets += list((self.tests.get(TestKind.SUCC) or {}).values())
+      targets += list((self.tests.get(TestKind.DIFF) or {}).values())
     else:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
-      test.run(self)
+      assert test.run(self)
+
+  def consolidate(self, raw_targets: list[str]):
+    targets: list[Test] = []
+    if len(raw_targets) == 0:
+      targets += list((self.tests.get(TestKind.DIFF) or {}).values())
+    else:
+      targets = self.get_targets(raw_targets)
+
+    for test in targets:
+      test.consolidate(self)
+
+  def compare(self, raw_targets: list[str]):
+    targets: list[Test] = []
+    if len(raw_targets) == 0:
+      targets += list((self.tests.get(TestKind.DIFF) or {}).values())
+    else:
+      targets = self.get_targets(raw_targets)
+
+    for test in targets:
+      assert test.compare(self)
+
+  def detect(self, raw_targets: list[str]):
+    for raw_target in raw_targets:
+      pieces = raw_target.split('/')
+      if len(pieces) != 2:
+        raise ValueError('Invalid target supplied: `%s` is not in format <kind>/<name>' % (raw_target,))
+      kind, name = pieces
+      if kind not in TestKind.values():
+        raise ValueError('Invalid test kind in target supplied: `%s` is not a valid TestKind' % (kind,))
+
+      if TestKind.parse(kind) not in self.tests:
+        self.tests[TestKind.parse(kind)] = {}
+      if name in self.tests[TestKind.parse(kind)]:
+        raise ValueError('Test already discovered and in config: `%s/%s`' % (kind, name))
+      namepath = os.path.join(self.test_dir, kind, name)
+      test = Test.discover(namepath)
+      self.tests[test.kind][test.name] = test
+    self.save()
 
   def report(self, raw_targets: list[str]):
     targets: list[Test] = []
     if len(raw_targets) == 0:
-      targets += (self.tests.get(TestKind.DIFF) or [])
+      targets += list((self.tests.get(TestKind.SUCC) or {}).values())
+      targets += list((self.tests.get(TestKind.DIFF) or {}).values())
+      targets += list((self.tests.get(TestKind.FAIL) or {}).values())
     else:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
-      test.report(self)
+      if test.kind == TestKind.FAIL:
+        assert not test.build(self)
+      elif test.kind == TestKind.SUCC:
+        assert test.build(self)
+      elif test.kind == TestKind.DIFF:
+        assert test.build(self)
+        assert test.run(self)
+        assert test.compare(self)
 
 def main():
   argument_parser = argparse.ArgumentParser()
-  argument_parser.add_argument('-a', '--action', type=str, nargs='*', help='Actions: clean, build, run')
+  argument_parser.add_argument('-a', '--action', type=str, nargs='*', help='Actions: detect, clean, build, run, consolidate, compare, report')
   argument_parser.add_argument('-t', '--target', type=str, nargs='*', help='Targets: `<kind>/<name>`')
   args = argument_parser.parse_args(sys.argv[1:])
 
   actions = (args.action or [])
+  do_detect = ('detect' in actions)
   do_clean = ('clean' in actions)
   do_build = ('build' in actions)
   do_run = ('run' in actions)
+  do_consolidate = ('consolidate' in actions)
+  do_compare = ('compare' in actions)
   do_report = ('report' in actions)
 
   framework = Framework.load_from_config('config.yml')
 
   targets = (args.target or [])
+  if do_detect:
+    framework.detect(targets)
   if do_clean:
     framework.clean(targets)
   if do_build:
     framework.build(targets)
   if do_run:
     framework.run(targets)
+  if do_consolidate:
+    framework.consolidate(targets)
+  if do_compare:
+    framework.compare(targets)
   if do_report:
     framework.report(targets)
+
+  framework.save()
 
 if __name__ == '__main__':
   main()

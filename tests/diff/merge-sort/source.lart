@@ -1,0 +1,92 @@
+include "types";
+include "stdlib";
+
+fn print_array(arr: &[i32], n: u64) {
+  let i: u64 = 0;
+  while (i < n) {
+    printf("%d ", arr[i]);
+    i = i + 1;
+  }
+  printf("\n");
+}
+
+// merge arr[0..mid) and arr[mid..n) into tmp[0..n), then copy back to arr
+fn merge(arr: &[i32], tmp: &[i32], n: u64, mid: u64) -> void {
+  let i: u64 = 0;
+  let j: u64 = mid;
+  let k: u64 = 0;
+
+  // main merge loop
+  while (i < mid && j < n) {
+    if (arr[i] <= arr[j]) {
+      tmp[k] = arr[i];
+      i = i + 1;
+    } else {
+      tmp[k] = arr[j];
+      j = j + 1;
+    }
+    k = k + 1;
+  }
+
+  // copy any remainder from left half
+  while (i < mid) {
+    tmp[k] = arr[i];
+    i = i + 1;
+    k = k + 1;
+  }
+
+  // copy any remainder from right half
+  while (j < n) {
+    tmp[k] = arr[j];
+    j = j + 1;
+    k = k + 1;
+  }
+
+  // copy tmp back into arr
+  let t: u64 = 0;
+  while (t < n) {
+    arr[t] = tmp[t];
+    t = t + 1;
+  }
+}
+
+fn mergesort(arr: &[i32], tmp: &[i32], n: u64) -> void {
+  if (n <= 1) {
+    return;
+  }
+
+  let mid: u64 = n / 2;
+
+  // recursively sort left half
+  mergesort(arr, tmp, mid);
+
+  // recursively sort right half
+  mergesort(arr + mid, tmp + mid, n - mid);
+
+  // merge the two sorted halves
+  merge(arr, tmp, n, mid);
+}
+
+fn main() -> i32 {
+  let n: u64 = 10;
+
+  // allocate main and temporary buffers
+  let rawA: &void = malloc(n * sizeof<i32>);
+  let rawB: &void = malloc(n * sizeof<i32>);
+  let arr: &[i32] = bitcast<&[i32]>(rawA);
+  let tmp: &[i32] = bitcast<&[i32]>(rawB);
+
+  // fill arr with descending numbers
+  let i: u64 = 0;
+  while (i < n) {
+    arr[i] = bitcast<i32>(n - bitcast<i32>(i));
+    i = i + 1;
+  }
+
+  mergesort(arr, tmp, n);
+  print_array(arr, n);
+
+  free(rawA);
+  free(rawB);
+  return 0;
+}

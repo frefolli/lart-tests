@@ -1,0 +1,254 @@
+include "types";
+include "stdlib";
+
+typedef HashEntry = struct {
+  key: string,   // nullptr for empty, non-nullptr for occupied or tombstone
+  value: i32,
+  used: bool,    // true if this slot currently holds a key
+  tomb: bool     // true if this slot was deleted (tombstone)
+};
+
+typedef HashTable = struct {
+  entries: &[HashEntry], // backing storage (capacity slots)
+  capacity: u64,
+  len: u64
+};
+
+// simple 64-bit mixing hash for nullptr-terminated bytes
+fn hash_str(s: string) -> u64 {
+  let h: u64 = 14695981039346656037; // FNV-1a offset basis
+  let p: string = s;
+  while ((*p) != 0) {
+    h = (h ^ bitcast<u64>(bitcast<i32>(*p))) * 1099511628211; // FNV-1a multiply
+    p = p + 1;
+  }
+  return h;
+}
+
+fn make_table(initial_cap: u64) -> &HashTable {
+  // allocate backing array and zero it
+  let size: u64 = initial_cap * sizeof<HashEntry>;
+  let raw: &void = malloc(size);
+  let arr: &[HashEntry] = bitcast<&[HashEntry]>(raw);
+
+  // initialize flags
+  let i: u64 = 0;
+  while (i < initial_cap) {
+    arr[i].key = nullptr;
+    arr[i].used = false;
+    arr[i].tomb = false;
+    i = i + 1;
+  }
+
+  let tblp: &HashTable = bitcast<&HashTable>(malloc(sizeof<HashTable));
+  tblp->entries = arr;
+  tblp->capacity = initial_cap;
+  tblp->len = 0;
+  return tblp;
+}
+
+// internal: probe to find index to insert or existing key
+fn probe_index(arr: &[HashEntry], cap: u64, key: string) -> i64 {
+  let h: u64 = hash_str(key);
+  let idx: u64 = h % cap;
+  let start: u64 = idx;
+  let first_tomb: i64 = -1;
+
+  while (true) {
+    if (!(arr[idx].used)) {
+      if (!(arr[idx].tomb)) {
+        // empty slot (never used)
+        if (first_tomb != -1) {
+          return first_tomb; // prefer earlier tombstone
+        }
+        return bitcast<i64>(idx);
+      } else {
+        // tombstone: remember first tombstone
+        if (first_tomb == -1) {
+          first_tomb = bitcast<i64>(idx);
+        }
+      }
+    } else {
+      // occupied: check key equality
+      if (arr[idx].key != nullptr) {
+        // compare nullptr-terminated strings
+        let a: string = arr[idx].key;
+        let b: string = key;
+        let eq: bool = true;
+        while ((*a) != 0 && (*b) != 0) {
+          if ((*a) != (*b)) { eq = false; break; }
+          a = a + 1; b = b + 1;
+        }
+        if (eq && (*a) == 0 && (*b) == 0) { // full match
+          return bitcast<i64>(idx);
+        }
+      }
+    }
+    idx = (idx + 1) % cap;
+    if (idx == start) {
+      // table full (should not happen if resized properly)
+      return -1;
+    }
+  }
+}
+
+// rehashing: create larger table and reinsert all live entries
+fn resize_and_rehash(tbl: &HashTable, newcap: u64) -> void {
+  let oldcap: u64 = tbl->capacity;
+  let oldarr: &[HashEntry] = tbl->entries;
+
+  // allocate new backing storage
+  let raw: &void = malloc(newcap * sizeof<HashEntry>);
+  let narr: &[HashEntry] = bitcast<&[HashEntry]>(raw);
+  let i: u64 = 0;
+  while (i < newcap) {
+    narr[i].key = nullptr;
+    narr[i].used = false;
+    narr[i].tomb = false;
+    i = i + 1;
+  }
+
+  // move entries
+  i = 0;
+  while (i < oldcap) {
+    if (oldarr[i].used && !(oldarr[i].tomb) && oldarr[i].key != nullptr) {
+      // reinsert
+      let idx: i64 = probe_index(narr, newcap, oldarr[i].key);
+      if (idx >= 0) {
+        let k: u64 = bitcast<u64>(idx);
+        narr[k].key = oldarr[i].key;
+        narr[k].value = oldarr[i].value;
+        narr[k].used = true;
+        narr[k].tomb = false;
+      }
+    }
+    i = i + 1;
+  }
+
+  // free old storage (optional)
+  free(bitcast<&void>(oldarr));
+  tbl->entries = narr;
+  tbl->capacity = newcap;
+  // len remains same
+}
+
+// public: insert or update
+fn insert(tbl: &HashTable, key: string, val: i32) -> void {
+  // grow if load factor > 0.7
+  if ((bitcast<u64>(tbl->len) * 10 / tbl->capacity) > 7) {
+    resize_and_rehash(tbl, tbl->capacity * 2);
+  }
+
+  let cap: u64 = tbl->capacity;
+  let idx: i64 = probe_index(tbl->entries, cap, key);
+  if (idx < 0) { return; } // insertion failed
+  let k: u64 = bitcast<u64>(idx);
+
+  if (tbl->entries[k].used && !(tbl->entries[k].tomb) && tbl->entries[k].key != nullptr) {
+    // update existing
+    tbl->entries[k].value = val;
+  } else {
+    // new insertion into empty or tombstone slot
+    tbl->entries[k].key = key;
+    tbl->entries[k].value = val;
+    tbl->entries[k].used = true;
+    tbl->entries[k].tomb = false;
+    tbl->len = tbl->len + 1;
+  }
+}
+
+// public: lookup with out param, returns true if found
+fn lookup(tbl: &HashTable, key: string, out: &i32) -> bool {
+  let cap: u64 = tbl->capacity;
+  let h: u64 = hash_str(key);
+  let idx: u64 = h % cap;
+  let start: u64 = idx;
+
+  while (true) {
+    if (!(tbl->entries[idx].used) && !(tbl->entries[idx].tomb)) {
+      // empty slot -> not found
+      return false;
+    }
+    if (tbl->entries[idx].used && tbl->entries[idx].key != nullptr) {
+      // compare key
+      let a: string = tbl->entries[idx].key;
+      let b: string = key;
+      let eq: bool = true;
+      while ((*a) != 0 && (*b) != 0) {
+        if ((*a) != (*b)) { eq = false; break; }
+        a = a + 1; b = b + 1;
+      }
+      if (eq && (*a) == 0 && (*b) == 0) {
+        // found
+        *out = tbl->entries[idx].value;
+        return true;
+      }
+    }
+    idx = (idx + 1) % cap;
+    if (idx == start) { return false; }
+  }
+}
+
+// public: delete key, return true if removed
+fn delete(tbl: &HashTable, key: string) -> bool {
+  let cap: u64 = tbl->capacity;
+  let h: u64 = hash_str(key);
+  let idx: u64 = h % cap;
+  let start: u64 = idx;
+
+  while (true) {
+    if (!(tbl->entries[idx].used) && !(tbl->entries[idx].tomb)) {
+      return false;
+    }
+    if (tbl->entries[idx].used && tbl->entries[idx].key != nullptr) {
+      // compare
+      let a: string = tbl->entries[idx].key;
+      let b: string = key;
+      let eq: bool = true;
+      while ((*a) != 0 && (*b) != 0) {
+        if ((*a) != (*b)) { eq = false; break; }
+        a = a + 1; b = b + 1;
+      }
+      if (eq && (*a) == 0 && (*b) == 0) {
+        // mark tombstone
+        tbl->entries[idx].used = false;
+        tbl->entries[idx].tomb = true;
+        tbl->entries[idx].key = nullptr;
+        tbl->len = tbl->len - 1;
+        return true;
+      }
+    }
+    idx = (idx + 1) % cap;
+    if (idx == start) { return false; }
+  }
+}
+
+// Example usage: count occurrences of a few words
+fn main() -> i32 {
+  let tbl: &HashTable = make_table(8);
+
+  // simple static dataset
+  insert(tbl, "dog", 1);
+  insert(tbl, "cat", 1);
+  insert(tbl, "fish", 1);
+  insert(tbl, "dog", 2); // overwrite / update (for demonstration)
+
+  let out: i32 = 0;
+  if (lookup(tbl, "dog", &out)) {
+    printf("dog -> %d\n", out);
+  }
+  if (lookup(tbl, "cat", &out)) {
+    printf("cat -> %d\n", out);
+  }
+  if (lookup(tbl, "fish", &out)) {
+    printf("fish -> %d\n", out);
+  }
+
+  // demonstrate deletion
+  delete(tbl, "cat");
+  if (!lookup(tbl, "cat", &out)) {
+    printf("cat -> (not found)\n");
+  }
+
+  return 0;
+}

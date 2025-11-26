@@ -1,0 +1,14 @@
+int_array[0] = 0
+int_array[1] = 9
+int_array[2] = 16
+int_array[3] = 21
+int_array[4] = 24
+int_array[5] = 25
+int_array[6] = 24
+int_array[7] = 21
+int_array[8] = 16
+int_array[9] = 9
+int_array[10] = 0
+map[0] = ff0000ff
+map[1] = ff00ff00
+map[2] = ffff0000

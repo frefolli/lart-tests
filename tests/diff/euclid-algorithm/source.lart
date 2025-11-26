@@ -1,0 +1,26 @@
+include "types.lart";
+include "stdlib.lart";
+// Euclid's algorithm: iterative gcd
+fn gcd(a: i32, b: i32) -> i32 {
+  let x: i32 = a;
+  let y: i32 = b;
+
+  while (y != 0) {
+    let t: i32 = y;
+    y = x % y;
+    x = t;
+  }
+
+  return x;
+}
+
+fn main() -> i32 {
+  let r1: i32 = gcd(48, 18);
+  let r2: i32 = gcd(1071, 462);
+
+  // Expected output printed via stdlib (assumed available)
+  printf("gcd(48,18) = %d\n", r1);
+  printf("gcd(1071,462) = %d\n", r2);
+
+  return 0;
+}

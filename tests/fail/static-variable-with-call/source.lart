@@ -1,0 +1,4 @@
+include "types";
+
+fn call() -> i32;
+var x: i32 = call();

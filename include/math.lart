@@ -1,7 +1,4 @@
 include "types";
 
-fn fabs(value: f64) -> f64 {
-  if (value < 0.0)
-    value = -value;
-  return value;
-}
+fn sqrt(value: f64) -> f64;
+fn fabs(value: f64) -> f64;

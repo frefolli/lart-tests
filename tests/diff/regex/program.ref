@@ -1,0 +1,12 @@
+<path_literal> matched substring "../main.c"
+<identifier> matched substring "vector__new"
+<integer> matched substring "240"
+<double> matched substring "13.450"
+<boolean> matched substring "true"
+<character> matched substring "'\n'"
+<string> matched substring ""(true)|(false)""
+<line_comment> matched substring "// qualcosa"
+<block_comment> matched substring "/* qualcosa 
+ */"
+<space> matched substring "  
+		  	  "

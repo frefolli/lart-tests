@@ -1,0 +1,34 @@
+include "types";
+include "stdlib";
+// Declare the signatures of external C functions:
+include "string"
+// fn strlen(s: &char) -> u64;
+// fn strcmp(a: &char, b: &char) -> i32;
+
+fn print_strlen(label: &char, s: &char) {
+  let n: u64 = strlen(s);
+  printf("%s: length = %lu\n", label, n);
+}
+
+fn print_cmp(a: &char, b: &char) {
+  let r: i32 = strcmp(a, b);
+  printf("strcmp(\"%s\", \"%s\") = %d\n", a, b, r);
+}
+
+fn main() -> i32 {
+  // Build two strings dynamically:
+  // Note: string literals already have type &char by Lart convention.
+  let hello: &char = "hello";
+  let world: &char = "world";
+  let hello2: &char = "hello";
+
+  // Demonstrate calling foreign functions:
+  print_strlen("hello", hello);
+  print_strlen("world", world);
+
+  // Compare different strings:
+  print_cmp(hello, world);
+  print_cmp(hello, hello2);
+
+  return 0;
+}

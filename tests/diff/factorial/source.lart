@@ -1,0 +1,19 @@
+include "types";
+include "stdlib";
+
+fn fact(n: i32) -> i32 {
+  if (n <= 1) {
+    return 1;
+  }
+  return n * fact(n - 1);
+}
+
+fn main() -> i32 {
+  let x: i32 = fact(5);
+  let y: i32 = fact(10);
+
+  printf("fact(5)  = %d\n", x);
+  printf("fact(10) = %d\n", y);
+
+  return 0;
+}

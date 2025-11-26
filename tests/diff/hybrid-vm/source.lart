@@ -1,0 +1,85 @@
+include "types";
+include "stdlib";
+
+// Static "fake enum" opcode constants:
+var OP_PUSH: u8 = 1;
+var OP_ADD:  u8 = 2;
+var OP_MUL:  u8 = 3;
+var OP_HALT: u8 = 4;
+
+// ---------------------------------------------------------
+// run_vm: executes a simple stack-based bytecode program.
+// ---------------------------------------------------------
+fn run_vm(stack: &[i32], code: &[u8]) -> i32 {
+  // Instruction and stack pointers:
+  let sp: &i32 = &(stack[0]);   // top of stack (exclusive)
+  let ip: &u8  = &(code[0]);    // program counter
+
+  while (true) {
+    let op: u8 = *ip;
+    ip = ip + 1;
+
+    if (op == OP_PUSH) {
+      let imm: u8 = *ip;
+      ip = ip + 1;
+      *(sp) = bitcast<i32>(imm);
+      sp = sp + 1;
+    }
+
+    if (op == OP_ADD) {
+      sp = sp - 1;
+      let b: i32 = *(sp);
+      sp = sp - 1;
+      let a: i32 = *(sp);
+      *(sp) = a + b;
+      sp = sp + 1;
+    }
+
+    if (op == OP_MUL) {
+      sp = sp - 1;
+      let b: i32 = *(sp);
+      sp = sp - 1;
+      let a: i32 = *(sp);
+      *(sp) = a * b;
+      sp = sp + 1;
+    }
+
+    if (op == OP_HALT) {
+      sp = sp - 1;
+      let result: i32 = *(sp);
+      return result;
+    }
+  }
+
+  return 0; // unreachable
+}
+
+// ---------------------------------------------------------
+// main: builds a bytecode program and runs the VM.
+// Computes (3 + 4) * 5 = 35.
+// ---------------------------------------------------------
+fn main() -> i32 {
+  // Allocate stack of 32 i32 values:
+  let raw_stack: &void = malloc(sizeof<i32> * 32);
+  let stack: &[i32] = bitcast<&[i32]>(raw_stack);
+
+  // Allocate bytecode buffer (9 bytes):
+  let raw_code: &void = malloc(sizeof<u8> * 9);
+  let code: &[u8] = bitcast<&[u8]>(raw_code);
+
+  // Program: PUSH 3, PUSH 4, ADD, PUSH 5, MUL, HALT
+  code[0] = OP_PUSH; code[1] = 3;
+  code[2] = OP_PUSH; code[3] = 4;
+  code[4] = OP_ADD;
+  code[5] = OP_PUSH; code[6] = 5;
+  code[7] = OP_MUL;
+  code[8] = OP_HALT;
+
+  let result: i32 = run_vm(stack, code);
+  printf("VM Result = %d\n", result);
+
+  free(raw_stack);
+  free(raw_code);
+
+  return 0;
+}

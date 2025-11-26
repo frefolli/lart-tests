@@ -1,202 +1,332 @@
-succ:
-- inputs: []
-  kind: succ
-  links: []
-  name: include-files
-  path: ./tests/succ/include-files
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: succ
-  links: []
-  name: merging-declarations
-  path: ./tests/succ/merging-declarations
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: succ
-  links: []
-  name: comments
-  path: ./tests/succ/comments
-  program: program.exe
-  sources:
-  - source.lart
 diff:
-- inputs: []
-  kind: diff
-  links: []
-  name: array-access
-  path: ./tests/diff/array-access
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: array
-  path: ./tests/diff/array
+  output: program.out
+  path: tests/diff/array
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: chatgpt
-  path: ./tests/diff/chatgpt
+  output: program.out
+  path: tests/diff/chatgpt
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: factorial
+  output: program.out
+  path: tests/diff/factorial
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: function-pointer
-  path: ./tests/diff/function-pointer
+  output: program.out
+  path: tests/diff/function-pointer
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
-  name: hello
-  path: ./tests/diff/hello
+  name: hash-table
+  output: program.out
+  path: tests/diff/hash-table
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: hybrid-vm
+  output: program.out
+  path: tests/diff/hybrid-vm
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: memory
+  output: program.out
+  path: tests/diff/memory
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
   kind: diff
   links:
-    - raylib
-  name: raylib
-  path: ./tests/diff/raylib
+  - m
+  name: newton-algorithm
+  output: program.out
+  path: tests/diff/newton-algorithm
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: regex
-  path: ./tests/diff/regex
+  output: program.out
+  path: tests/diff/regex
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs:
+- args: []
+  inputs:
   - input.in
   kind: diff
   links: []
   name: streams-and-floats
-  path: ./tests/diff/streams-and-floats
+  output: program.out
+  path: tests/diff/streams-and-floats
   program: program.exe
+  reference: program.ref
   sources:
+  - source.lart
   - contrib.c
-  - source.lart
-- inputs: []
-  kind: diff
-  links: []
-  name: strucs-as-rvalue
-  path: ./tests/diff/strucs-as-rvalue
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: strucs
-  path: ./tests/diff/strucs
+  output: program.out
+  path: tests/diff/strucs
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: tree
-  path: ./tests/diff/tree
+  output: program.out
+  path: tests/diff/tree
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
-  kind: diff
-  links:
-    - tree-sitter
-    - tree-sitter-lart
-  name: ts
-  path: ./tests/diff/ts
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: variadic
-  path: ./tests/diff/variadic
+  output: program.out
+  path: tests/diff/variadic
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: array-access
+  output: program.out
+  path: tests/diff/array-access
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: euclid-algorithm
+  output: program.out
+  path: tests/diff/euclid-algorithm
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: foreign-functions
+  output: program.out
+  path: tests/diff/foreign-functions
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links:
+  - m
+  name: geometry
+  output: program.out
+  path: tests/diff/geometry
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: hello
+  output: program.out
+  path: tests/diff/hello
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: linked-lists
+  output: program.out
+  path: tests/diff/linked-lists
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: merge-sort
+  output: program.out
+  path: tests/diff/merge-sort
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links:
+  - raylib
+  name: raylib
+  output: program.out
+  path: tests/diff/raylib
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
   kind: diff
   links: []
   name: static-variables
-  path: ./tests/diff/static-variables
+  output: program.out
+  path: tests/diff/static-variables
   program: program.exe
+  reference: program.ref
   sources:
-  - source.lart
   - extern.lart
-- inputs:
+  - source.lart
+- args: []
+  inputs:
   - input.in
   kind: diff
   links: []
   name: streams-with-externs
-  path: ./tests/diff/streams-with-externs
+  output: program.out
+  path: tests/diff/streams-with-externs
   program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: diff
+  links: []
+  name: strucs-as-rvalue
+  output: program.out
+  path: tests/diff/strucs-as-rvalue
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args:
+  - ./tests/diff/ts/source.lart
+  inputs: []
+  kind: diff
+  links:
+  - tree-sitter
+  - tree-sitter-lart
+  name: ts
+  output: program.out
+  path: tests/diff/ts
+  program: program.exe
+  reference: program.ref
   sources:
   - source.lart
 fail:
-- inputs: []
+- args: []
+  inputs: []
   kind: fail
   links: []
-  name: decl-type-checking
-  path: ./tests/fail/decl-type-checking
+  name: static-variable-with-cyclic-dependency
+  output: program.out
+  path: tests/fail/static-variable-with-cyclic-dependency
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
-  kind: fail
+succ:
+- args: []
+  inputs: []
+  kind: succ
   links: []
-  name: duplicate-definition
-  path: ./tests/fail/duplicate-definition
+  name: include-files
+  output: program.out
+  path: ./tests/succ/include-files
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
-  kind: fail
+- args: []
+  inputs: []
+  kind: succ
   links: []
-  name: include-directives
-  path: ./tests/fail/include-directives
+  name: merging-declarations
+  output: program.out
+  path: ./tests/succ/merging-declarations
   program: program.exe
+  reference: program.ref
   sources:
   - source.lart
-- inputs: []
-  kind: fail
+- args: []
+  inputs: []
+  kind: succ
   links: []
-  name: name-resolution
-  path: ./tests/fail/name-resolution
+  name: comments
+  output: program.out
+  path: ./tests/succ/comments
   program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: fail
-  links: []
-  name: syntax
-  path: ./tests/fail/syntax
-  program: program.exe
-  sources:
-  - source.lart
-- inputs: []
-  kind: fail
-  links: []
-  name: type-checking
-  path: ./tests/fail/type-checking
-  program: program.exe
+  reference: program.ref
   sources:
   - source.lart
