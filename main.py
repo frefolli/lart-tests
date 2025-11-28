@@ -6,6 +6,19 @@ import yaml
 import argparse
 import sys
 
+class TextColor(enum.Enum):
+  RED="\x1b[1;31m"#]
+  GREEN="\x1b[1;32m"#]
+  PURPLE="\x1b[1;35m"#]
+  AZURE="\x1b[1;36m"#]
+  NORMAL="\x1b[0;39m"#]
+
+  def begin(self):
+    print(self.value, end='')
+
+  def end(self):
+    print(TextColor.NORMAL.value, end='')
+
 def read_yaml(path: str) -> dict:
   with open(path, 'r') as file:
     return yaml.load(file.read(), Loader=yaml.Loader)
@@ -31,9 +44,10 @@ class CMD:
   def assemble(self) -> str:
     return ' '.join([self.cmd] + self.args)
 
-  def exec(self) -> int:
+  def exec(self, verbose: bool) -> int:
     cmdline = self.assemble()
-    print('|>', cmdline)
+    if verbose:
+      print('|>', cmdline)
     return os.system(cmdline)
 
 class Compiler:
@@ -57,7 +71,7 @@ class Compiler:
       options = data['options'],
     )
 
-  def compile(self, sources: list[str], links: list[str], output: str) -> int:
+  def compile(self, sources: list[str], links: list[str], output: str, verbose: bool, complaint: str) -> bool:
     cmd = CMD(self.path)
     cmd.append(['-I' + include_directory for include_directory in self.include_directories])
     cmd.append(['-l' + link for link in links])
@@ -66,8 +80,9 @@ class Compiler:
     cmd.append(['-o', output])
     if output.endswith('.o'):
       cmd.append('-c')
+    cmd.append(['&>', complaint])
 
-    return cmd.exec() == 0
+    return cmd.exec(verbose) == 0
 
 class TestKind(enum.Enum):
   SUCC='succ'
@@ -146,46 +161,58 @@ class Test:
     s_sources = list(filter(lambda f: f.endswith('.s'), sources))
     o_sources = set(filter(lambda f: f.endswith('.o'), sources))
 
+    complains = []
     for c_source in c_sources:
       o_source = c_source.replace('.c', '.o')
       if o_source in o_sources:
         raise ValueError('Conflicting CC::out vs LARTC::in => `%s`' % (o_source,))
       o_sources.add(o_source)
-      ok = framework.cc.compile([c_source], [], o_source)
-      if not ok:
-        return False
+      complains.append(o_source.replace('.o', '.com'))
+      if (not os.path.exists(o_source)) or (os.path.getmtime(o_source) <= os.path.getmtime(c_source)):
+        ok = framework.cc.compile([c_source], [], o_source, verbose=framework.verbose, complaint=complains[-1])
+        if not ok:
+          return False
 
     for lart_source in lart_sources:
       o_source = lart_source.replace('.lart', '.o')
       if o_source in o_sources:
         raise ValueError('Conflicting LARTC::out vs LARTC::in => `%s`' % (o_source,))
       o_sources.add(o_source)
-      ok = framework.lartc.compile([lart_source], [], o_source)
-      if not ok:
-        return False
+      complains.append(o_source.replace('.o', '.com'))
+      if (not os.path.exists(o_source)) or (os.path.getmtime(o_source) <= os.path.getmtime(lart_source)):
+        ok = framework.lartc.compile([lart_source], [], o_source, verbose=framework.verbose, complaint=complains[-1])
+        if not ok:
+          return False
 
     for ll_source in ll_sources:
       o_source = ll_source.replace('.ll', '.o')
       if o_source in o_sources:
         raise ValueError('Conflicting LLVMIR::out vs LARTC::in => `%s`' % (o_source,))
       o_sources.add(o_source)
-      ok = framework.lartc.compile([ll_source], [], o_source)
-      if not ok:
-        return False
+      complains.append(o_source.replace('.o', '.com'))
+      if (not os.path.exists(o_source)) or (os.path.getmtime(o_source) <= os.path.getmtime(ll_source)):
+        ok = framework.lartc.compile([ll_source], [], o_source, verbose=framework.verbose, complaint=complains[-1])
+        if not ok:
+          return False
 
     for s_source in s_sources:
       o_source = s_source.replace('.s', '.o')
       if o_source in o_sources:
         raise ValueError('Conflicting AS::out vs LARTC::in => `%s`' % (o_source,))
       o_sources.add(o_source)
-      ok = framework.lartc.compile([s_source], [], o_source)
-      if not ok:
-        return False
+      complains.append(o_source.replace('.o', '.com'))
+      if (not os.path.exists(o_source)) or (os.path.getmtime(o_source) <= os.path.getmtime(s_source)):
+        ok = framework.lartc.compile([s_source], [], o_source, verbose=framework.verbose, complaint=complains[-1])
+        if not ok:
+          return False
 
     o_sources = list(o_sources)
     program = os.path.join(self.path, self.program)
-    ok = framework.lartc.compile(o_sources, self.links, program)
-    return ok == True
+    complains.append(program.replace('.exe', '.com'))
+    ok = True
+    if (not os.path.exists(program)) or (os.path.getmtime(program) <= max([os.path.getmtime(o_source) for o_source in o_sources])):
+      ok = framework.lartc.compile(o_sources, self.links, program, verbose=framework.verbose, complaint=complains[-1])
+    return ok
 
   def run(self, framework: Framework) -> bool:
     assert self.kind in [TestKind.SUCC, TestKind.DIFF]
@@ -195,7 +222,7 @@ class Test:
     for input in self.inputs:
       cmd.append(['<', os.path.join(self.path, input)])
     cmd.append(['>', os.path.join(self.path, self.output)])
-    return cmd.exec() == 0
+    return cmd.exec(framework.verbose) == 0
 
   def consolidate(self, framework: Framework) -> None:
     assert self.kind in [TestKind.DIFF]
@@ -208,9 +235,9 @@ class Test:
     cmd = CMD('cp')
     cmd.append(output_path)
     cmd.append(reference_path)
-    assert cmd.exec() == 0
+    assert cmd.exec(framework.verbose) == 0
 
-  def compare(self, framework: Framework) -> None:
+  def compare(self, framework: Framework) -> bool:
     assert self.kind in [TestKind.DIFF]
     output_path = os.path.join(self.path, self.output)
     reference_path = os.path.join(self.path, self.reference)
@@ -224,7 +251,7 @@ class Test:
     cmd = CMD('diff')
     cmd.append(output_path)
     cmd.append(reference_path)
-    return cmd.exec() == 0
+    return cmd.exec(framework.verbose) == 0
 
   def clean(self, framework: Framework) -> None:
     sources = [os.path.join(self.path, source) for source in self.sources]
@@ -238,7 +265,14 @@ class Test:
     o_sources += [lart_source.replace('.lart', '.o') for lart_source in lart_sources]
     o_sources += [ll_source.replace('.ll', '.o') for ll_source in ll_sources]
     o_sources += [s_source.replace('.s', '.o') for s_source in s_sources]
+    
+    complains = []
+    complains += [c_source.replace('.c', '.com') for c_source in c_sources]
+    complains += [lart_source.replace('.lart', '.com') for lart_source in lart_sources]
+    complains += [ll_source.replace('.ll', '.com') for ll_source in ll_sources]
+    complains += [s_source.replace('.s', '.com') for s_source in s_sources]
     program = os.path.join(self.path, self.program)
+    complains.append(program.replace('.exe', '.com'))
     output = os.path.join(self.path, self.output)
 
     cmd = CMD('rm')
@@ -246,7 +280,31 @@ class Test:
     cmd.append(o_sources)
     cmd.append(program)
     cmd.append(output)
-    assert cmd.exec() == 0
+    cmd.append(complains)
+    assert cmd.exec(framework.verbose) == 0
+
+  def begin(self, phase: str):
+    print('| %s | %s | %s | ..... |' % (
+      self.kind.name.ljust(6),
+      self.name.ljust(40),
+      phase.ljust(12)
+    ), end='\r')
+
+  def end(self, phase: str, esit: bool):
+    print('| %s | %s | %s | ' % (
+      self.kind.name.ljust(6),
+      self.name.ljust(40),
+      phase.ljust(12)
+    ), end='')
+    if esit:
+      TextColor.GREEN.begin()
+      print('PASS'.ljust(5), end='')
+      TextColor.GREEN.end()
+    else:
+      TextColor.RED.begin()
+      print('ERROR'.ljust(5), end='')
+      TextColor.RED.end()
+    print(' |')
 
   def report(self, framework: Framework) -> None:
     print('#' * 20 + self.name.ljust(20) + '#' * 20)
@@ -288,7 +346,8 @@ class Framework:
     self.cc = cc
     self.lartc =lartc 
     self.test_dir: str = test_dir
-    self.tests: dict[TestKind, dict[str, Test]] = Framework.load_tests(test_dir)
+    self.tests: dict[TestKind, dict[str, Test]] = {}
+    self.verbose: bool = False
 
   def to_dict(self) -> dict:
     return {
@@ -362,6 +421,9 @@ class Framework:
     else:
       return Framework.read_tests(test_config)
 
+  def restore(self):
+    self.tests = Framework.load_tests(self.test_dir)
+
   def save(self):
     test_config = os.path.join(self.test_dir, 'config.yml')
     Framework.write_tests(self.tests, test_config)
@@ -395,13 +457,16 @@ class Framework:
   def clean(self, raw_targets: list[str]):
     targets: list[Test] = []
     if len(raw_targets) == 0:
+      targets += list((self.tests.get(TestKind.FAIL) or {}).values())
       targets += list((self.tests.get(TestKind.SUCC) or {}).values())
       targets += list((self.tests.get(TestKind.DIFF) or {}).values())
     else:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
+      test.begin('CLEAN')
       test.clean(self)
+      test.end('CLEAN', True)
 
   def build(self, raw_targets: list[str]):
     targets: list[Test] = []
@@ -412,7 +477,10 @@ class Framework:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
-      assert test.build(self)
+      test.begin('BUILD')
+      esit = test.build(self)
+      test.end('BUILD', esit)
+      assert esit
 
   def run(self, raw_targets: list[str]):
     targets: list[Test] = []
@@ -423,7 +491,10 @@ class Framework:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
-      assert test.run(self)
+      test.begin('RUN')
+      esit = test.run(self)
+      test.end('RUN', esit)
+      assert esit
 
   def consolidate(self, raw_targets: list[str]):
     targets: list[Test] = []
@@ -433,7 +504,9 @@ class Framework:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
+      test.begin('CONSOLIDATE')
       test.consolidate(self)
+      test.end('CONSOLIDATE', True)
 
   def compare(self, raw_targets: list[str]):
     targets: list[Test] = []
@@ -443,7 +516,10 @@ class Framework:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
-      assert test.compare(self)
+      test.begin('COMPARE')
+      esit = test.compare(self)
+      test.end('COMPARE', esit)
+      assert esit
 
   def detect(self, raw_targets: list[str]):
     for raw_target in raw_targets:
@@ -473,19 +549,35 @@ class Framework:
       targets = self.get_targets(raw_targets)
 
     for test in targets:
+      esit = True
+      test.begin('BUILD')
       if test.kind == TestKind.FAIL:
-        assert not test.build(self)
-      elif test.kind == TestKind.SUCC:
-        assert test.build(self)
-      elif test.kind == TestKind.DIFF:
-        assert test.build(self)
-        assert test.run(self)
-        assert test.compare(self)
+        esit &= (not test.build(self))
+      elif test.kind in [TestKind.SUCC, TestKind.DIFF]:
+        esit &= test.build(self)
+      test.end('BUILD', esit)
+      if not esit:
+        continue
+
+      if test.kind in [TestKind.SUCC, TestKind.DIFF]:
+        esit = True
+        test.begin('RUN')
+        esit &= test.run(self)
+        test.end('RUN', esit)
+      if not esit:
+        continue
+
+      if test.kind == TestKind.DIFF:
+        esit = True
+        test.begin('COMPARE')
+        esit &= test.compare(self)
+        test.end('COMPARE', esit)
 
 def main():
   argument_parser = argparse.ArgumentParser()
   argument_parser.add_argument('-a', '--action', type=str, nargs='*', help='Actions: detect, clean, build, run, consolidate, compare, report')
   argument_parser.add_argument('-t', '--target', type=str, nargs='*', help='Targets: `<kind>/<name>`')
+  argument_parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose/debug log')
   args = argument_parser.parse_args(sys.argv[1:])
 
   actions = (args.action or [])
@@ -498,6 +590,8 @@ def main():
   do_report = ('report' in actions)
 
   framework = Framework.load_from_config('config.yml')
+  framework.verbose = (args.verbose or False)
+  framework.restore()
 
   targets = (args.target or [])
   if do_detect:

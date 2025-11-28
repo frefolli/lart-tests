@@ -296,6 +296,105 @@ fail:
   reference: program.ref
   sources:
   - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: decl-type-checking
+  output: program.out
+  path: tests/fail/decl-type-checking
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: include-directives
+  output: program.out
+  path: tests/fail/include-directives
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: static-extern-variable-with-value
+  output: program.out
+  path: tests/fail/static-extern-variable-with-value
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: syntax
+  output: program.out
+  path: tests/fail/syntax
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: duplicate-definition
+  output: program.out
+  path: tests/fail/duplicate-definition
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: name-resolution
+  output: program.out
+  path: tests/fail/name-resolution
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: static-variable-with-call
+  output: program.out
+  path: tests/fail/static-variable-with-call
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: static-variable-with-vanext
+  output: program.out
+  path: tests/fail/static-variable-with-vanext
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: fail
+  links: []
+  name: type-checking
+  output: program.out
+  path: tests/fail/type-checking
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
 succ:
 - args: []
   inputs: []
@@ -326,6 +425,17 @@ succ:
   name: comments
   output: program.out
   path: ./tests/succ/comments
+  program: program.exe
+  reference: program.ref
+  sources:
+  - source.lart
+- args: []
+  inputs: []
+  kind: succ
+  links: []
+  name: tcom
+  output: program.out
+  path: tests/succ/tcom
   program: program.exe
   reference: program.ref
   sources:
